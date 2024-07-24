@@ -1,0 +1,35 @@
+from sort import Sort
+
+tracker = Sort()
+
+cap = cv2.VideoCapture('input_video.mp4')
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    # Detect objects (using the function from previous step)
+    objects = detect_objects(frame)
+
+    # Extract detections in the required format for SORT
+    detections = []
+    for label, _, bbox in objects:
+        x, y, w, h = bbox
+        detections.append([x, y, x + w, y + h])
+
+    # Update SORT tracker
+    if detections:
+        tracked_objects = tracker.update(np.array(detections))
+        for obj in tracked_objects:
+            x1, y1, x2, y2, track_id = obj.astype(int)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+            cv2.putText(frame, f'Track {track_id}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+
+    # Display frame with tracked objects
+    cv2.imshow('Object Tracking', frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
